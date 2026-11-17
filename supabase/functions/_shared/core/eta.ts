@@ -75,6 +75,14 @@ export function estimateStopEtas(input: EtaInput): StopEta[] {
   let fromStopAlong = input.doneAlong;
 
   upcoming.forEach((stop, index) => {
+    // A stop already behind the bus (e.g. a trip picked up mid-route, before those stops are
+    // marked passed) gets no ETA: it must not add distance or dwell, and must never trigger
+    // an "about to arrive" alert for a bus that has already gone by.
+    if (stop.along <= progress) {
+      fromSeq = stop.seq;
+      fromStopAlong = stop.along;
+      return;
+    }
     const distance = Math.max(0, stop.along - fromAlong);
     let seconds = liveSeconds(distance, speedEwma);
 

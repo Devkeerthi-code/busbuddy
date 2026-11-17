@@ -29,6 +29,17 @@ describe('estimateStopEtas', () => {
     ]);
   });
 
+  it('ignores stops already behind the bus when a trip is picked up mid-route', () => {
+    const route = [
+      { seq: 0, along: 0 },
+      { seq: 1, along: 1000 },
+      { seq: 2, along: 2000 },
+      { seq: 3, along: 3000 },
+    ];
+    const etas = estimateStopEtas({ progress: 2000, speedEwma: 10, upcoming: route, doneSeq: -1, doneAlong: 0 });
+    expect(etas).toEqual([{ seq: 3, seconds: 100 }]);
+  });
+
   it('clamps a stationary bus to a minimum speed instead of infinity', () => {
     const [first] = estimateStopEtas({ progress: 0, speedEwma: 0, upcoming, doneSeq: 0, doneAlong: 0 });
     expect(first.seconds).toBe(1000 / ETA_DEFAULTS.minSpeedMps);
