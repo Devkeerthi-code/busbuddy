@@ -1,4 +1,4 @@
-import { stepArrival, initialArrivalState, type ArrivalState, type StopEvent } from './arrival.ts';
+import { ARRIVAL_DEFAULTS, stepArrival, initialArrivalState, type ArrivalState, type StopEvent } from './arrival.ts';
 import { delaySeconds, estimateStopEtas, updateSpeed, type SegmentHistory, type StopEta } from './eta.ts';
 import { haversineM, type LngLat } from './geo.ts';
 import { checkFix, JITTER_DEFAULTS, type Fix } from './jitter.ts';
@@ -78,11 +78,11 @@ export function processFix(state: TrackerState, fix: Fix, ctx: TrackerContext): 
   const distances = ctx.stops.map((s) => haversineM(s, fix));
   const arrival = stepArrival(state.arrival, ctx.stops, distances, progress, fix.t);
 
-  // Standing at a stop is dwell, not slowness: dwell is added per stop in the ETA, so
-  // zero-speed samples there would count the wait twice and make the ETA balloon.
-  const atStop = arrival.state.atSeq !== null && state.arrival.atSeq !== null;
+  // Near a stop the bus is slowing, waiting or pulling out: that is dwell, which the ETA
+  // already adds per stop. Counting those near-zero samples as speed would make ETAs balloon.
+  const nearStop = distances.some((d) => d <= ARRIVAL_DEFAULTS.exitRadiusM);
   const speedEwma =
-    state.lastFix && !atStop
+    state.lastFix && !nearStop
       ? updateSpeed(state.speedEwma, progress - state.progress, (fix.t - state.lastFix.t) / 1000)
       : state.speedEwma;
 

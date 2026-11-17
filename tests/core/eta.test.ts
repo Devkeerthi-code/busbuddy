@@ -145,6 +145,21 @@ describe('processFix end to end with jitter and stops', () => {
     expect(state.speedEwma).toBeGreaterThan(8);
   });
 
+  it('gives a sane ETA when a trip starts while the bus waits at a stop', () => {
+    let state = initialTrackerState();
+    let last: number | undefined;
+    // Parked at the depot for a minute, then just pulling away.
+    const positions = [...Array.from({ length: 12 }, () => 0), 60];
+    positions.forEach((east, i) => {
+      const r = processFix(state, { ...at(east, 0), t: i * 5000, accuracy: 5 }, ctx);
+      if (!r.accepted) return;
+      state = r.state;
+      last = r.etas.find((e) => e.seq === 1)?.seconds;
+    });
+    // 1440 m to go: with the fallback ~7 m/s that is ~205 s; counting the wait as speed gave ~400 s.
+    expect(last).toBeLessThan(300);
+  });
+
   it('marks breadcrumbs every 30 s only', () => {
     let state = initialTrackerState();
     let stored = 0;
