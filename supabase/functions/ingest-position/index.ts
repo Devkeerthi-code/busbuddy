@@ -109,8 +109,9 @@ Deno.serve(async (req) => {
 
   const ctxRes = await asDriver.rpc('ingest_context', { p_trip: tripId });
   if (ctxRes.error) {
-    const forbidden = ctxRes.error.message.includes('not_your_active_trip');
-    return json(forbidden ? 403 : 500, { error: forbidden ? 'not_your_active_trip' : 'context_failed' });
+    if (ctxRes.error.message.includes('not_your_active_trip')) return json(403, { error: 'not_your_active_trip' });
+    if (/jwt|token/i.test(ctxRes.error.message)) return json(401, { error: 'not_signed_in' });
+    return json(500, { error: 'context_failed' });
   }
   const ctx = ContextSchema.safeParse(ctxRes.data);
   if (!ctx.success || !ctx.data.shape || ctx.data.shape.length < 2) return json(409, { error: 'route_not_ready' });

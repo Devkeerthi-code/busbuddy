@@ -55,3 +55,6 @@ supabase/.branches/
 
 # copied from node_modules on install
 public/maplibre-gl-worker.mjs
+
+# local Edge Function env (see README)
+supabase/functions/.env

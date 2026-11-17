@@ -61,7 +61,9 @@
     "db:seed": "tsx --env-file=.env scripts/seed-demo.ts",
     "db:admins": "tsx --env-file=.env scripts/set-admins.ts",
     "simulate": "tsx --env-file=.env scripts/simulate.ts",
-    "postinstall": "node scripts/copy-map-worker.js"
+    "postinstall": "node scripts/copy-map-worker.js",
+    "functions:deploy": "tsx --env-file=.env scripts/deploy-functions.ts",
+    "functions:serve": "npx --yes deno@2 run --watch --allow-net --allow-env --allow-read --env-file=supabase/functions/.env supabase/functions/ingest-position/index.ts"
   },
   "private": true
 }

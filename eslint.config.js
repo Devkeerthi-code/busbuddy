@@ -7,4 +7,8 @@ module.exports = defineConfig([
     // The edge function runs on Deno (npm: specifiers); it is checked with `deno check` instead.
     ignores: ['dist/*', 'coverage/*', 'supabase/functions/ingest-position/*'],
   },
+  {
+    files: ['scripts/**/*.js'],
+    languageOptions: { globals: { __dirname: 'readonly', require: 'readonly' } },
+  },
 ]);

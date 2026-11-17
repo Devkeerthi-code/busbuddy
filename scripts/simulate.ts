@@ -3,7 +3,10 @@
  * ingest-position API a real phone uses. Adds GPS noise, bad-accuracy fixes, one
  * teleport outlier, stop dwell and a signal drop (fixes queued, then sent as a batch).
  *
- *   npm run simulate -- --route A --period morning [--from 3] [--speed 1] [--no-drop]
+ *   npm run simulate -- --route A --period morning [--from 3] [--speed 1] [--no-drop] [--keep-schedule]
+ *
+ * By default the DEMO timetable is shifted so the starting stop is due right now, so the
+ * board reads "On time" whenever you demo. --keep-schedule leaves the timetable alone.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -27,6 +30,7 @@ const { values } = parseArgs({
     from: { type: 'string', default: '0' },
     speed: { type: 'string', default: '1' },
     'no-drop': { type: 'boolean', default: false },
+    'keep-schedule': { type: 'boolean', default: false },
   },
 });
 
@@ -42,9 +46,26 @@ function demoLogin(key: 'driverA' | 'driverB') {
 }
 
 /** Puts today's demo trip back to "scheduled" so the demo can be replayed any number of times. */
-async function resetTrip(tripId: string) {
+async function resetTrip(tripId: string, alignStopIndex: number | null) {
   const db = await connect();
   try {
+    if (alignStopIndex !== null) {
+      // Shift the whole timetable so the n-th stop (in travel order) is due now, in the college's time zone.
+      await db.query(
+        `with t as (
+           select tr.template_id, c.timezone from public.trips tr
+           join public.colleges c on c.id = tr.college_id and c.is_demo
+           where tr.id = $1
+         ), anchor as (
+           select st.scheduled_time from public.template_stop_times st, t
+           where st.template_id = t.template_id order by st.scheduled_time offset $2 limit 1
+         )
+         update public.template_stop_times st
+         set scheduled_time = st.scheduled_time + (date_trunc('minute', (now() at time zone t.timezone))::time - anchor.scheduled_time)
+         from t, anchor where st.template_id = t.template_id`,
+        [tripId, alignStopIndex],
+      );
+    }
     await db.query('delete from public.stop_events where trip_id = $1', [tripId]);
     await db.query('delete from public.breadcrumbs where trip_id = $1', [tripId]);
     await db.query('delete from public.notification_log where trip_id = $1', [tripId]);
@@ -78,7 +99,7 @@ async function main() {
   const trip = trips?.[0];
   if (!trip) throw new Error('No demo trip found for today. Run "npm run db:seed".');
 
-  await resetTrip(trip.id);
+  await resetTrip(trip.id, values['keep-schedule'] ? null : Number(values.from));
   const { error: startError } = await client.rpc('start_trip', { p_trip: trip.id });
   if (startError) throw startError;
 
