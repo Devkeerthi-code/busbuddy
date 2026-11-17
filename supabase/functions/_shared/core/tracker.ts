@@ -6,7 +6,10 @@ import { projectOnRoute, type Route } from './route.ts';
 
 export const TRACKER_DEFAULTS = {
   backtrackToleranceM: 50,
-  lookAheadM: 2000,
+  /** minimum look-ahead; the real limit grows with time since the last fix */
+  lookAheadM: 200,
+  /** slack over the max plausible speed when sizing the look-ahead window */
+  reachFactor: 1.2,
   offRouteM: 150,
   breadcrumbEveryMs: 30_000,
 };
@@ -52,7 +55,12 @@ export type TrackerResult =
 function searchWindow(state: TrackerState, fix: Fix, route: Route) {
   if (!state.lastFix) return { minAlong: 0, maxAlong: route.length };
   const seconds = (fix.t - state.lastFix.t) / 1000;
-  const reach = Math.max(TRACKER_DEFAULTS.lookAheadM, JITTER_DEFAULTS.maxSpeedMps * seconds);
+  // Roads that loop back (U-turns at median gaps, flyover ramps) put a later leg of the route
+  // right next to the bus. Only distance the bus could physically have covered is searched.
+  const reach = Math.max(
+    TRACKER_DEFAULTS.lookAheadM,
+    JITTER_DEFAULTS.maxSpeedMps * seconds * TRACKER_DEFAULTS.reachFactor,
+  );
   return {
     minAlong: Math.max(0, state.progress - TRACKER_DEFAULTS.backtrackToleranceM),
     maxAlong: Math.min(route.length, state.progress + reach),

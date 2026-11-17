@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     accepted,
     rejected: fixes.length - accepted,
     status: completed ? 'completed' : 'active',
-    nextStop: next ? { seq: next.seq, name: next.name, seconds: latestEtas[0]?.seconds ?? null } : null,
+    nextStop: next ? { seq: next.seq, name: next.name, seconds: accepted > 0 ? latestEtas[0]?.seconds ?? null : null } : null,
     alertsSent,
   });
 });

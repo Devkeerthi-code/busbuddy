@@ -49,3 +49,6 @@ yarn-error.*
 coverage/
 supabase/.temp/
 supabase/.branches/
+
+# demo logins printed by the seed script
+*.local

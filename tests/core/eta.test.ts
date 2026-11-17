@@ -137,3 +137,37 @@ describe('processFix end to end with jitter and stops', () => {
     expect(stored).toBe(3);
   });
 });
+
+describe('processFix on a road that doubles back', () => {
+  // 1 km east, U-turn at a median gap, 1 km back west on the other carriageway 15 m away.
+  const route = buildRoute([at(0, 0), at(1000, 0), at(1000, 15), at(0, 15)]);
+  const ctx: TrackerContext = {
+    route,
+    stops: [
+      { ...at(0, 0), seq: 0, along: 0, scheduledAt: null },
+      { ...at(0, 15), seq: 1, along: route.length, scheduledAt: null },
+    ],
+  };
+
+  it('stays on the outbound leg even when a fix is closer to the return leg', () => {
+    let state = initialTrackerState();
+    for (let i = 0; i <= 6; i++) {
+      const wobble = i === 6 ? 12 : 0; // last fix drifts towards the other carriageway
+      const r = processFix(state, { ...at(i * 50, wobble), t: i * 5000, accuracy: 8 }, ctx);
+      if (r.accepted) state = r.state;
+    }
+    expect(state.progress).toBeGreaterThan(250);
+    expect(state.progress).toBeLessThan(400);
+  });
+
+  it('follows the return leg once the bus has actually driven round the U-turn', () => {
+    let state = initialTrackerState();
+    const path = [...Array.from({ length: 21 }, (_, i) => at(i * 50, 0)), at(1000, 15),
+      ...Array.from({ length: 10 }, (_, i) => at(950 - i * 50, 15))];
+    path.forEach((p, i) => {
+      const r = processFix(state, { ...p, t: i * 5000, accuracy: 8 }, ctx);
+      if (r.accepted) state = r.state;
+    });
+    expect(state.progress).toBeGreaterThan(1400);
+  });
+});
