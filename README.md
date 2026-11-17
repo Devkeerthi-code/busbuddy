@@ -3,7 +3,7 @@
 Live tracking for college buses: students see where their bus is and when it reaches their stop; the transport office sees the whole fleet.
 
 **Live demo:** TODO: add the GitHub Pages link after the first deploy (see [Deploy → Web demo](#web-demo-github-pages)).
-**Android app:** TODO: add the EAS install link after the first build (see [Android build](#android-build-eas)).
+**Android app:** [install page for the standalone APK](https://expo.dev/accounts/devkeerthip/projects/busbuddy/builds/0945c595-a8c8-4f72-96d6-d08c71fd9d08) (EAS preview build; open it on the phone and tap Install). Push alerts need the Firebase step in [Push notifications](#push-notifications-firebase--fcm-v1).
 
 ## Who is this for and what problem does it solve?
 
