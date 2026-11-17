@@ -124,6 +124,27 @@ describe('processFix end to end with jitter and stops', () => {
     expect(lastDelay).not.toBeNull();
   });
 
+  it('does not let waiting at a stop inflate the ETA', () => {
+    let state = initialTrackerState();
+    const etaToLast: number[] = [];
+    // Drives 10 m/s to stop 1 (1500 m), waits there 2 minutes, then continues.
+    const positions = [
+      ...Array.from({ length: 31 }, (_, i) => i * 50),
+      ...Array.from({ length: 24 }, () => 1500),
+      ...Array.from({ length: 4 }, (_, i) => 1550 + i * 50),
+    ];
+    positions.forEach((east, i) => {
+      const r = processFix(state, { ...at(east, 0), t: i * 5000, accuracy: 5 }, ctx);
+      if (!r.accepted) return;
+      state = r.state;
+      const eta = r.etas.find((e) => e.seq === 2);
+      if (eta) etaToLast.push(eta.seconds);
+    });
+    // 1.5 km left at ~10 m/s is ~150 s; with the old behaviour this was 750 s (2 m/s floor).
+    expect(etaToLast[etaToLast.length - 1]).toBeLessThan(200);
+    expect(state.speedEwma).toBeGreaterThan(8);
+  });
+
   it('marks breadcrumbs every 30 s only', () => {
     let state = initialTrackerState();
     let stored = 0;

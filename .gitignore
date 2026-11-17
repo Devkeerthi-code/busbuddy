@@ -52,3 +52,6 @@ supabase/.branches/
 
 # demo logins printed by the seed script
 *.local
+
+# copied from node_modules on install
+public/maplibre-gl-worker.mjs

@@ -74,12 +74,17 @@ export function processFix(state: TrackerState, fix: Fix, ctx: TrackerContext): 
   const projection = projectOnRoute(ctx.route, fix, searchWindow(state, fix, ctx.route));
   // Progress never goes backwards: small negative moves are GPS noise, not a reversing bus.
   const progress = Math.max(state.progress, projection.along);
-  const speedEwma = state.lastFix
-    ? updateSpeed(state.speedEwma, progress - state.progress, (fix.t - state.lastFix.t) / 1000)
-    : state.speedEwma;
 
   const distances = ctx.stops.map((s) => haversineM(s, fix));
   const arrival = stepArrival(state.arrival, ctx.stops, distances, progress, fix.t);
+
+  // Standing at a stop is dwell, not slowness: dwell is added per stop in the ETA, so
+  // zero-speed samples there would count the wait twice and make the ETA balloon.
+  const atStop = arrival.state.atSeq !== null && state.arrival.atSeq !== null;
+  const speedEwma =
+    state.lastFix && !atStop
+      ? updateSpeed(state.speedEwma, progress - state.progress, (fix.t - state.lastFix.t) / 1000)
+      : state.speedEwma;
 
   const doneSeq = arrival.state.doneSeq;
   const upcoming = ctx.stops.filter((s) => s.seq > doneSeq);

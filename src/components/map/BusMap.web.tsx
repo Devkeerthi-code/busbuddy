@@ -1,14 +1,18 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Map as MLMap, Marker, type GeoJSONSource, type MapMouseEvent } from 'maplibre-gl';
+import { Map as MLMap, Marker, setWorkerUrl, type GeoJSONSource, type MapMouseEvent } from 'maplibre-gl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { StyleSheet, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
-import { mapStyles, space } from '@/theme/tokens';
+import { space } from '@/theme/tokens';
 import { BusPlate, MapAttribution, StopDot } from './Markers';
+import { fitPadding, useMapStyle } from './style';
 import { boundsOf, line, lines, type BusMapProps, type Coord } from './types';
 
 const EMPTY = lines([]);
+
+// Served from public/ (copied by scripts/copy-map-worker.js); respects a GitHub Pages sub-path.
+setWorkerUrl(new URL(`${process.env.EXPO_BASE_URL ?? ''}/maplibre-gl-worker.mjs`, window.location.origin).href);
 
 type Overlay = { key: string; coord: Coord; node: React.ReactNode; onClick?: () => void };
 
@@ -26,6 +30,7 @@ export function BusMap({
   accessibilityLabel,
 }: BusMapProps) {
   const { colors, isDark } = useTheme();
+  const mapStyle = useMapStyle(isDark);
   const container = useRef<HTMLDivElement | null>(null);
   const map = useRef<MLMap | null>(null);
   const markers = useRef(new globalThis.Map<string, { marker: Marker; el: HTMLDivElement }>());
@@ -36,10 +41,10 @@ export function BusMap({
   }, [onPress]);
 
   useEffect(() => {
-    if (!container.current) return;
+    if (!container.current || !mapStyle) return;
     const m = new MLMap({
       container: container.current,
-      style: isDark ? mapStyles.dark : mapStyles.light,
+      style: mapStyle,
       center: [80.22, 12.93],
       zoom: 11,
       attributionControl: false,
@@ -65,9 +70,9 @@ export function BusMap({
       m.remove();
       map.current = null;
     };
-    // The style is chosen once per mount; the theme toggle remounts the map via its key.
+    // Layer colours are read once per style; a theme change brings a new style and a new map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDark]);
+  }, [mapStyle]);
 
   useEffect(() => {
     const m = map.current;
@@ -83,7 +88,7 @@ export function BusMap({
     const b = boundsOf(fit);
     if (!m || !ready || !b) return;
     m.fitBounds([[b[0], b[1]], [b[2], b[3]]], {
-      padding: { top: space[8], left: space[6], right: space[6], bottom: bottomInset + space[6] },
+      padding: fitPadding(m.getContainer().clientHeight, bottomInset),
       duration: 400,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

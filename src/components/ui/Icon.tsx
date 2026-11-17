@@ -33,7 +33,7 @@ type Props = { name: IconName; size?: number; color: string; strokeWidth?: numbe
 
 export function Icon({ name, size = 24, color, strokeWidth = 2 }: Props) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" accessibilityElementsHidden importantForAccessibility="no">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       {name === 'sun' && <Circle cx={12} cy={12} r={4} stroke={color} strokeWidth={strokeWidth} />}
       {name === 'clock' && <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={strokeWidth} />}
       {name === 'locate' && <Circle cx={12} cy={12} r={6} stroke={color} strokeWidth={strokeWidth} />}
