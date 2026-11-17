@@ -1,17 +1,18 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-function required(name: string): string {
-  const value = process.env[name];
+function required(value: string | undefined, name: string): string {
   if (!value) throw new Error(`${name} is not set. See .env.example.`);
   return value;
 }
 
-export const supabaseUrl = () => required('EXPO_PUBLIC_SUPABASE_URL');
-export const publishableKey = () => required('EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
+export const supabaseUrl = () => required(process.env.EXPO_PUBLIC_SUPABASE_URL, 'EXPO_PUBLIC_SUPABASE_URL');
+export const publishableKey = () =>
+  required(process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY, 'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
+const secretKey = () => required(process.env.SUPABASE_SECRET_KEY, 'SUPABASE_SECRET_KEY');
 
 /** Bypasses RLS. Scripts only: never import this from app code. */
 export function adminClient(): SupabaseClient {
-  return createClient(supabaseUrl(), required('SUPABASE_SECRET_KEY'), {
+  return createClient(supabaseUrl(), secretKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
