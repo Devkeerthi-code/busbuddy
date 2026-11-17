@@ -1,0 +1,81 @@
+import { Camera, GeoJSONSource, Layer, Map, Marker } from '@maplibre/maplibre-react-native';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useTheme } from '@/theme/ThemeProvider';
+import { mapStyles, space } from '@/theme/tokens';
+import { BusPlate, MapAttribution, StopDot } from './Markers';
+import { boundsOf, line, lines, type BusMapProps } from './types';
+
+/** Android/iOS map: MapLibre Native with free OpenFreeMap (OpenStreetMap) tiles. */
+export function BusMap({
+  shape,
+  driven,
+  otherShapes = [],
+  stops = [],
+  buses = [],
+  fit = [],
+  bottomInset = 0,
+  onPress,
+  onBusPress,
+  accessibilityLabel,
+}: BusMapProps) {
+  const { colors, isDark } = useTheme();
+  const fitKey = fit.map((c) => c.join(',')).join(';');
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refit only when the set of points changes
+  const bounds = useMemo(() => boundsOf(fit), [fitKey]);
+
+  return (
+    <View style={styles.fill} accessibilityLabel={accessibilityLabel}>
+      <Map
+        style={styles.fill}
+        mapStyle={isDark ? mapStyles.dark : mapStyles.light}
+        attribution={false}
+        logo={false}
+        compass={false}
+        touchPitch={false}
+        onPress={onPress ? (e) => onPress(e.nativeEvent.lngLat) : undefined}
+      >
+        {bounds && (
+          <Camera
+            bounds={bounds}
+            padding={{ top: space[8], left: space[6], right: space[6], bottom: bottomInset + space[6] }}
+            duration={400}
+            easing="ease"
+          />
+        )}
+        {otherShapes.length > 0 && (
+          <GeoJSONSource id="others" data={lines(otherShapes)}>
+            <Layer type="line" id="others-line" paint={{ 'line-color': colors.boardDim, 'line-width': 3, 'line-opacity': 0.5 }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
+          </GeoJSONSource>
+        )}
+        {shape && shape.length > 1 && (
+          <GeoJSONSource id="route" data={line(shape)}>
+            <Layer type="line" id="route-casing" paint={{ 'line-color': colors.board, 'line-width': 9 }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
+            <Layer type="line" id="route-line" paint={{ 'line-color': colors.accent, 'line-width': 5 }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
+          </GeoJSONSource>
+        )}
+        {driven && driven.length > 1 && (
+          <GeoJSONSource id="driven" data={line(driven)}>
+            <Layer type="line" id="driven-line" paint={{ 'line-color': colors.boardDim, 'line-width': 5 }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
+          </GeoJSONSource>
+        )}
+        {stops.map((s) => (
+          <Marker key={s.id} id={`stop-${s.id}`} lngLat={s.coord} anchor="center">
+            <StopDot stop={s} />
+          </Marker>
+        ))}
+        {buses.map((b) => (
+          <Marker key={b.id} id={`bus-${b.id}`} lngLat={b.coord} anchor="center" onPress={onBusPress ? () => onBusPress(b.id) : undefined}>
+            <BusPlate bus={b} />
+          </Marker>
+        ))}
+      </Map>
+      <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { bottom: bottomInset + space[2] }]}>
+        <View style={{ flex: 1 }} pointerEvents="none" />
+        <MapAttribution />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });
