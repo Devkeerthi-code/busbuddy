@@ -55,7 +55,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "jest --selectProjects core",
-    "test:db": "jest --selectProjects db --runInBand",
+    "test:db": "node --env-file=.env node_modules/jest/bin/jest.js --selectProjects db --runInBand",
     "db:migrate": "tsx --env-file=.env scripts/db-migrate.ts",
     "db:seed": "tsx --env-file=.env scripts/seed-demo.ts",
     "db:admins": "tsx --env-file=.env scripts/set-admins.ts",
