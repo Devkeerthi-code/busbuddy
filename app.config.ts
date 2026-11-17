@@ -44,7 +44,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     ['expo-notifications', { color: '#FFB400', defaultChannel: 'arrivals' }],
   ],
-  experiments: { typedRoutes: true },
+  // GitHub Pages serves the web demo from /<repo>/; local dev and EAS builds use the root.
+  experiments: { typedRoutes: true, baseUrl: process.env.WEB_BASE_URL || undefined },
   extra: {
     eas: { projectId: process.env.EAS_PROJECT_ID },
   },

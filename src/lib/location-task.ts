@@ -15,9 +15,11 @@ export const TRIP_TASK = 'busbuddy-trip-location';
 const KEYS = { trip: 'busbuddy.active-trip', queue: 'busbuddy.fix-queue', status: 'busbuddy.trip-status', lastSent: 'busbuddy.last-sent' };
 const MAX_QUEUE = 300;
 const BATCH = 50;
-/** send right away after this much movement… */
+/** upload once the bus has moved this far… */
 const SEND_AFTER_M = 15;
-/** …otherwise at least this often, so a bus waiting at a stop still looks live */
+/** …but not more often than this (the map glides between updates; keeps server calls low)… */
+const MIN_GAP_MS = 10_000;
+/** …and at least this often, so a bus waiting at a stop still looks live */
 const HEARTBEAT_MS = 20_000;
 
 export type QueuedFix = { lat: number; lng: number; t: number; accuracy: number; speed: number | null };
@@ -50,7 +52,8 @@ async function enqueue(fixes: QueuedFix[]) {
 async function shouldSend(latest: QueuedFix): Promise<boolean> {
   const last = await readJson<QueuedFix | null>(KEYS.lastSent, null);
   if (!last) return true;
-  return latest.t - last.t >= HEARTBEAT_MS || haversineM(last, latest) >= SEND_AFTER_M;
+  const gap = latest.t - last.t;
+  return gap >= HEARTBEAT_MS || (gap >= MIN_GAP_MS && haversineM(last, latest) >= SEND_AFTER_M);
 }
 
 /** Upload queued fixes in order. Keeps them on failure so nothing is lost in a dead zone. */
