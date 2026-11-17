@@ -15,7 +15,7 @@ if (!ref) {
 
 const result = spawnSync(
   'npx',
-  ['--yes', 'supabase@latest', 'functions', 'deploy', 'ingest-position', '--project-ref', ref, '--no-verify-jwt', '--use-api'],
+  ['--yes', 'supabase@latest', 'functions', 'deploy', 'ingest-position', `--remote=${ref}`, '--no-verify-jwt', '--use-api'],
   { stdio: 'inherit', shell: process.platform === 'win32' },
 );
 process.exit(result.status ?? 1);
