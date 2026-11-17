@@ -9,6 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'BusBuddy',
   slug: 'busbuddy',
+  owner: process.env.EAS_OWNER ?? 'devkeerthip',
   scheme: 'busbuddy',
   version: '1.0.0',
   orientation: 'portrait',
@@ -47,6 +48,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // GitHub Pages serves the web demo from /<repo>/; local dev and EAS builds use the root.
   experiments: { typedRoutes: true, baseUrl: process.env.WEB_BASE_URL || undefined },
   extra: {
-    eas: { projectId: process.env.EAS_PROJECT_ID },
+    eas: { projectId: process.env.EAS_PROJECT_ID ?? '56c376cb-9424-427a-8361-2068edd5dbf3' },
   },
 });
