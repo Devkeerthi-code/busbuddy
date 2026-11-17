@@ -70,24 +70,26 @@ describe('arrival alert de-duplication', () => {
 
       await db.asService();
       const first = await db.q<{ stop_name: string; bus_number: string }>(
-        'select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [1]]);
+        'select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [stop.id]]);
       expect(first).toEqual([expect.objectContaining({ stop_name: 'Middle', bus_number: '12' })]);
-      const second = await db.q('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [1, 2]]);
+      const second = await db.q('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [stop.id, stop.id]]);
       expect(second).toHaveLength(0);
     }));
 
   it('is not callable by students or drivers', () =>
     withDb(async (db) => {
       const a = await buildFleet(db, 'a');
+      const [stop] = await db.q<{ id: string }>('select id from public.route_stops where route_id = $1 limit 1', [a.routeId]);
       await db.as(a.driverId);
-      expect(await db.fails('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [1]])).toMatch(/permission denied/);
+      expect(await db.fails('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [stop.id]])).toMatch(/permission denied/);
     }));
 
   it('skips students who turned alerts off or wait at a stop not yet near', () =>
     withDb(async (db) => {
       const a = await buildFleet(db, 'a');
       await db.as(a.riderId);
-      const [far] = await db.q<{ id: string }>('select id from public.route_stops where route_id = $1 and seq = 2', [a.routeId]);
+      const stops = await db.q<{ id: string }>('select id from public.route_stops where route_id = $1 order by seq', [a.routeId]);
+      const [near, far] = [stops[1], stops[2]];
       await db.q(
         `insert into public.rider_prefs (user_id, college_id, route_id, stop_id, period) values ($1, $2, $3, $4, 'morning')`,
         [a.riderId, a.collegeId, a.routeId, far.id]);
@@ -95,6 +97,10 @@ describe('arrival alert de-duplication', () => {
       await db.as(a.driverId);
       await db.q('select public.start_trip($1)', [a.tripId]);
       await db.asService();
-      expect(await db.q('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [1]])).toHaveLength(0);
+      expect(await db.q('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [near.id]])).toHaveLength(0);
+      await db.as(a.riderId);
+      await db.q('update public.rider_prefs set stop_id = $1, alerts = false where user_id = $2', [near.id, a.riderId]);
+      await db.asService();
+      expect(await db.q('select * from public.claim_arrival_alerts($1, $2)', [a.tripId, [near.id]])).toHaveLength(0);
     }));
 });
