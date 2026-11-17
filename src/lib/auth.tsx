@@ -58,7 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') void refreshFor(next);
+      // Never call Supabase inside this callback: it runs while the auth lock is held and
+      // can deadlock other requests. Defer to the next tick instead (per supabase-js docs).
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') setTimeout(() => void refreshFor(next), 0);
     });
     return () => {
       active = false;
