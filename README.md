@@ -27,8 +27,8 @@ Any college can set itself up. Members join with an invite code, and colleges ar
 | --- | --- | --- |
 | ![Answer in dark mode](docs/07-answer-dark.png) | ![Fleet view](docs/08-admin-live.png) | ![Route editor](docs/10-route-editor.png) |
 
-Taken from the Expo web build with the clearly labelled **DEMO** college after a simulated trip, so the board shows the “bus left your stop” state.
-TODO: add screenshots with a bus on the way (`npm run simulate -- --route A --period morning --from 3`) and Android screenshots of the driver screen from a real phone.
+Taken from the Expo web build with the clearly labelled **DEMO** college while `npm run simulate` drove Bus 12 towards the student’s stop (the “Arriving” state, one minute out).
+TODO: add Android screenshots of the driver screen (Start trip, Sharing location) from a real phone.
 
 ## Features
 
