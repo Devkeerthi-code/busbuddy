@@ -1,11 +1,12 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
+import { Plate } from '@/components/ui/Plate';
 import { Txt } from '@/components/ui/Txt';
 import type { BusView } from '@/hooks/useRiderView';
 import { agoLabel, delayLabel, minutesFromSeconds } from '@/lib/format';
 import { useTheme } from '@/theme/ThemeProvider';
-import { fonts, radius, space } from '@/theme/tokens';
+import { fonts, space } from '@/theme/tokens';
 
 function statusOf(view: BusView): { text: string; tone: 'ontime' | 'late' | 'neutral' } {
   const a = view.answer;
@@ -23,7 +24,9 @@ export function BusCard({ view, now, highlighted, onPress }: { view: BusView; no
   const a = view.answer;
   const eta = a.kind === 'on_the_way' && Number.isFinite(a.seconds) ? `${minutesFromSeconds(a.seconds)} min` : '–';
   const delaySec = view.live.position?.delaySec ?? view.trip.delay_s;
-  const delay = view.live.status === 'active' && delaySec !== null ? `${Math.max(0, Math.round(delaySec / 60))} min` : '–';
+  // Same threshold as the status pill, so the card never says "On time" next to "Delay 1 min".
+  const late = view.live.status === 'active' && delayLabel(delaySec).tone === 'late';
+  const delay = view.live.status !== 'active' || delaySec === null ? '–' : late ? `${Math.round(delaySec / 60)} min` : 'None';
   const updated = view.live.status === 'active' ? agoLabel(view.live.position?.t ?? null, now).replace('updated ', '') : '–';
 
   return (
@@ -35,25 +38,24 @@ export function BusCard({ view, now, highlighted, onPress }: { view: BusView; no
     >
       <Card highlighted={highlighted} style={{ gap: space[3] }}>
         <View style={styles.top}>
-          <View style={[styles.plate, { backgroundColor: highlighted ? colors.accent : colors.surface2 }]}>
-            <Txt variant="micro" style={{ fontSize: 9, color: colors.onAccent }}>Bus</Txt>
-            <Txt style={[styles.plateNum, { color: highlighted ? colors.onAccent : colors.ink }]}>{view.trip.buses?.number ?? '?'}</Txt>
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
+          <Plate number={view.trip.buses?.number ?? '?'} off={!highlighted} />
+          <View style={styles.titleCol}>
             <Txt variant="label" style={{ fontSize: 17 }} numberOfLines={1}>
               {view.trip.routes?.name ?? 'Route'}
             </Txt>
-            <Txt variant="label" color="ink2" style={{ fontFamily: fonts.medium }}>
+            <Txt variant="label" color="ink2" style={{ fontFamily: fonts.medium }} numberOfLines={1}>
               {view.trip.period === 'morning' ? 'Morning run' : 'Evening run'} · {view.stops.length} stops
               {view.stops[0]?.scheduled ? ` · starts ${view.stops[0].scheduled}` : ''}
             </Txt>
+            <View style={styles.pillRow}>
+              <Pill text={status.text} tone={status.tone} />
+            </View>
           </View>
-          <Pill text={status.text} tone={status.tone} />
         </View>
         <View style={[styles.stats, { borderTopColor: colors.line }]}>
           <Stat label="ETA" value={eta} />
           <Stat label="Seats" value={String(view.trip.buses?.capacity ?? '–')} />
-          <Stat label="Delay" value={delay} tone={delaySec !== null && delaySec >= 120 ? 'late' : undefined} />
+          <Stat label="Delay" value={delay} tone={late ? 'late' : undefined} />
           <Stat label="Updated" value={updated} />
         </View>
       </Card>
@@ -71,8 +73,8 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 'la
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  plate: { width: 52, height: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  plateNum: { fontFamily: fonts.black, fontSize: 22, lineHeight: 24 },
+  top: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  titleCol: { flex: 1, gap: 2 },
+  pillRow: { flexDirection: 'row', marginTop: space[1] },
   stats: { flexDirection: 'row', borderTopWidth: 1, paddingTop: space[3], gap: space[2] },
 });

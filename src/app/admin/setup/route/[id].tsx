@@ -6,6 +6,7 @@ import { BusMap } from '@/components/map/BusMap';
 import type { Coord, MapStop } from '@/components/map/types';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
 import { useToast } from '@/components/ui/Toast';
@@ -139,23 +140,37 @@ function RouteEditor({ id, geo, recorded, reload }: EditorProps) {
           fit={fit}
           onPress={([lng, lat]) => update([...stops, { key: nextKey(), name: `Stop ${stops.length + 1}`, lng, lat }])}
         />
+        <View pointerEvents="none" style={[styles.mapHint, { backgroundColor: colors.board }]}>
+          <Icon name="plus" size={16} color={colors.boardInk} />
+          <Txt variant="label" style={{ color: colors.boardText }}>Tap to add stop {stops.length + 1}</Txt>
+        </View>
       </View>
 
-      {stops.map((s, i) => (
-        <Card key={s.key} style={styles.stopRow}>
-          <Txt variant="title" tabular style={{ width: 28 }}>{i + 1}</Txt>
-          <TextInput
-            value={s.name}
-            onChangeText={(name) => update(stops.map((x) => (x.key === s.key ? { ...x, name } : x)))}
-            accessibilityLabel={`Name of stop ${i + 1}`}
-            maxLength={60}
-            style={[styles.nameInput, { color: colors.ink, borderColor: colors.line }]}
-          />
-          <IconButton icon="arrowUp" label="Move up" onPress={() => move(i, -1)} disabled={i === 0} />
-          <IconButton icon="arrowDown" label="Move down" onPress={() => move(i, 1)} disabled={i === stops.length - 1} />
-          <IconButton icon="trash" label={`Delete ${s.name}`} onPress={() => update(stops.filter((x) => x.key !== s.key))} />
-        </Card>
-      ))}
+      <View style={styles.listHead} accessibilityLiveRegion="polite">
+        <Txt variant="micro" color="ink2" style={{ flex: 1 }}>
+          {stops.length} {stops.length === 1 ? 'stop' : 'stops'} · in travel order
+        </Txt>
+        <View style={[styles.saveDot, { backgroundColor: dirty ? colors.accent : colors.ontime }]} />
+        <Txt variant="label" color={dirty ? 'accentText' : 'ink2'}>{dirty ? 'Unsaved changes' : 'Saved'}</Txt>
+      </View>
+
+      {stops.length === 0 ? (
+        <EmptyState icon="route" title="No stops yet" body="Tap the map where the bus first picks people up, then each stop after it. A route needs at least 2 stops." />
+      ) : (
+        <View style={[styles.stopList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          {stops.map((s, i) => (
+            <StopRow
+              key={s.key}
+              index={i}
+              count={stops.length}
+              name={s.name}
+              onRename={(name) => update(stops.map((x) => (x.key === s.key ? { ...x, name } : x)))}
+              onMove={(by) => move(i, by)}
+              onDelete={() => update(stops.filter((x) => x.key !== s.key))}
+            />
+          ))}
+        </View>
+      )}
 
       {recorded.length > 0 && (
         <Card style={{ gap: space[3] }}>
@@ -173,18 +188,98 @@ function RouteEditor({ id, geo, recorded, reload }: EditorProps) {
   );
 }
 
-function IconButton({ icon, label, onPress, disabled }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean }) {
+type StopRowProps = {
+  index: number;
+  count: number;
+  name: string;
+  onRename: (name: string) => void;
+  onMove: (by: number) => void;
+  onDelete: () => void;
+};
+
+/** One stop on the rail: number marker, editable name, reorder and delete. */
+function StopRow({ index, count, name, onRename, onMove, onDelete }: StopRowProps) {
+  const { colors } = useTheme();
+  const [focused, setFocused] = useState(false);
+  const end = index === 0 || index === count - 1;
+  return (
+    <View style={styles.stopRow}>
+      <View style={styles.rail}>
+        <View style={[styles.railLine, { backgroundColor: index === 0 ? 'transparent' : colors.line }]} />
+        <View style={[styles.stopNum, { backgroundColor: end ? colors.ink : colors.surface, borderColor: colors.ink }]}>
+          <Txt tabular style={[styles.stopNumText, { color: end ? colors.bg : colors.ink }]}>{index + 1}</Txt>
+        </View>
+        <View style={[styles.railLine, { backgroundColor: index === count - 1 ? 'transparent' : colors.line }]} />
+      </View>
+      <TextInput
+        value={name}
+        onChangeText={onRename}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        accessibilityLabel={`Name of stop ${index + 1}`}
+        maxLength={60}
+        selectionColor={colors.accent}
+        style={[
+          styles.nameInput,
+          { color: colors.ink, borderColor: focused ? colors.ink : 'transparent', backgroundColor: focused ? colors.surface : colors.surface2 },
+        ]}
+      />
+      <IconButton icon="arrowUp" label={`Move ${name} up`} onPress={() => onMove(-1)} disabled={index === 0} />
+      <IconButton icon="arrowDown" label={`Move ${name} down`} onPress={() => onMove(1)} disabled={index === count - 1} />
+      <IconButton icon="trash" label={`Delete ${name}`} onPress={onDelete} danger />
+    </View>
+  );
+}
+
+type IconButtonProps = { icon: IconName; label: string; onPress: () => void; disabled?: boolean; danger?: boolean };
+
+function IconButton({ icon, label, onPress, disabled, danger }: IconButtonProps) {
   const { colors } = useTheme();
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} disabled={disabled} style={[styles.iconBtn, { opacity: disabled ? 0.3 : 1 }]}>
-      <Icon name={icon} size={20} color={colors.ink} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [styles.iconBtn, { opacity: disabled ? 0.25 : 1, backgroundColor: pressed ? colors.surface2 : 'transparent' }]}
+    >
+      <Icon name={icon} size={20} color={danger ? colors.late : colors.ink} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  map: { height: 340, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1.5 },
-  stopRow: { flexDirection: 'row', alignItems: 'center', gap: space[1], paddingVertical: space[2] },
-  nameInput: { flex: 1, minHeight: tap.min, borderBottomWidth: 1.5, fontFamily: fonts.semibold, fontSize: 16, paddingHorizontal: space[2] },
-  iconBtn: { width: 40, height: tap.min, alignItems: 'center', justifyContent: 'center' },
+  map: { height: 360, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1.5 },
+  mapHint: {
+    position: 'absolute',
+    top: space[3],
+    left: space[3],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+    borderRadius: radius.pill,
+  },
+  listHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: -space[2] },
+  saveDot: { width: 8, height: 8, borderRadius: 4 },
+  stopList: { borderRadius: radius.lg, borderWidth: 1.5, paddingHorizontal: space[2] },
+  stopRow: { flexDirection: 'row', alignItems: 'center', minHeight: 60 },
+  rail: { width: 32, alignSelf: 'stretch', alignItems: 'center' },
+  railLine: { width: 3, flex: 1 },
+  stopNum: { width: 28, height: 28, borderRadius: 14, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
+  stopNumText: { fontFamily: fonts.black, fontSize: 13, lineHeight: 16 },
+  nameInput: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: tap.min,
+    borderWidth: 2,
+    borderRadius: radius.md,
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    paddingHorizontal: space[3],
+    marginHorizontal: space[1],
+  },
+  iconBtn: { width: tap.min, height: tap.min, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
 });

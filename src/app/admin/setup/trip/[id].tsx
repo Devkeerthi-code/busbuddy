@@ -213,5 +213,5 @@ const styles = StyleSheet.create({
   activeRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   startRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], borderBottomWidth: 1, minHeight: 52 },
-  timeInput: { width: 80, height: 44, borderWidth: 2, borderRadius: radius.sm, textAlign: 'center', fontFamily: fonts.bold, fontSize: 17 },
+  timeInput: { width: 80, height: tap.min, borderWidth: 2, borderRadius: radius.sm, textAlign: 'center', fontFamily: fonts.bold, fontSize: 17 },
 });

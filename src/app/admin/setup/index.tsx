@@ -1,10 +1,11 @@
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SetupHeader } from '@/components/admin/SetupHeader';
-import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { ListGroup, ListRow } from '@/components/ui/List';
 import { Screen } from '@/components/ui/Screen';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Txt } from '@/components/ui/Txt';
 import { fetchMembers, fetchRouteStopCounts, fetchTemplates, fetchUsage, type UsageTotals } from '@/lib/admin-data';
 import { useAuth } from '@/lib/auth';
@@ -48,42 +49,57 @@ export default function SetupHome() {
       <Txt color="ink2">
         {steps === null ? 'Checking your setup…' : remaining === 0 ? 'Everything is in place. Share the student code and drivers can start trips.' : `${remaining} step${remaining > 1 ? 's' : ''} left before students can track buses.`}
       </Txt>
-      {(steps ?? []).map((s, i) => (
-        <Pressable key={s.key} onPress={() => router.push(s.href)} accessibilityRole="button" accessibilityLabel={`${s.title}. ${s.detail}. ${s.done ? 'Done' : 'To do'}`}>
-          <Card style={styles.step} highlighted={!s.done && steps?.findIndex((x) => !x.done) === i}>
-            <View style={[styles.badge, { backgroundColor: s.done ? colors.ontimeBg : colors.surface2 }]}>
-              <Icon name={s.done ? 'check' : s.icon} color={s.done ? colors.ontime : colors.ink} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Txt variant="label" style={{ fontSize: 17 }}>{s.title}</Txt>
-              <Txt variant="label" color="ink2">{s.detail}</Txt>
-            </View>
-            <Icon name="chevronRight" color={colors.ink2} />
-          </Card>
-        </Pressable>
-      ))}
+      {steps === null ? (
+        <Skeleton height={280} rounded={radius.lg} />
+      ) : (
+        <ListGroup>
+          {steps.map((s, i) => {
+            const next = !s.done && steps.findIndex((x) => !x.done) === i;
+            return (
+              <ListRow
+                key={s.key}
+                onPress={() => router.push(s.href)}
+                accessibilityLabel={`Step ${i + 1}: ${s.title}. ${s.detail}. ${s.done ? 'Done' : 'To do'}`}
+                highlighted={next}
+                leading={
+                  <View style={[styles.badge, { backgroundColor: s.done ? colors.ontimeBg : next ? colors.accent : colors.surface2 }]}>
+                    {s.done ? (
+                      <Icon name="check" size={20} color={colors.ontime} />
+                    ) : (
+                      <Txt variant="label" tabular style={{ fontSize: 17, color: next ? colors.onAccent : colors.ink }}>{i + 1}</Txt>
+                    )}
+                  </View>
+                }
+                title={s.title}
+                detail={s.detail}
+              />
+            );
+          })}
+        </ListGroup>
+      )}
       <View style={{ gap: space[2] }}>
         <Txt variant="micro" color="ink2">Usage · last 30 days (counts only)</Txt>
-        <Card style={styles.usage}>
+        <View style={[styles.usage, { backgroundColor: colors.surface, borderColor: colors.line }]}>
           {[
             ['People joined', usage.member_joined?.last30 ?? 0],
             ['Trips completed', usage.trip_completed?.last30 ?? 0],
             ['Live map opens', usage.rider_opened_live?.last30 ?? 0],
             ['Arrival alerts', usage.alert_sent?.last30 ?? 0],
           ].map(([label, value]) => (
-            <View key={label} style={{ flexBasis: '45%', flexGrow: 1 }}>
-              <Txt variant="title" tabular>{value}</Txt>
+            <View key={label} style={styles.usageCell} accessible accessibilityLabel={`${value} ${label}`}>
+              <Txt variant="display" tabular style={styles.usageValue}>{value}</Txt>
               <Txt variant="label" color="ink2">{label}</Txt>
             </View>
           ))}
-        </Card>
+        </View>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  step: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  badge: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  usage: { flexDirection: 'row', flexWrap: 'wrap', gap: space[4] },
+  badge: { width: 40, height: 40, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  usage: { flexDirection: 'row', flexWrap: 'wrap', borderRadius: radius.lg, borderWidth: 1.5, paddingVertical: space[2] },
+  usageCell: { flexBasis: '50%', flexGrow: 1, minWidth: 140, gap: 2, paddingHorizontal: space[4], paddingVertical: space[3] },
+  usageValue: { fontSize: 32, lineHeight: 36, letterSpacing: -1 },
 });

@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ListGroup, ListRow } from '@/components/ui/List';
 import { Pill } from '@/components/ui/Pill';
+import { Plate } from '@/components/ui/Plate';
 import { Screen } from '@/components/ui/Screen';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Txt } from '@/components/ui/Txt';
@@ -45,29 +46,27 @@ export default function AdminHistory() {
           <Txt variant="micro" color="ink2">
             {new Date(`${day}T00:00:00`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
           </Txt>
-          {list.map((t) => {
-            const delay = delayLabel(t.delay_s);
-            return (
-              <Card key={t.id} style={styles.row}>
-                <Txt variant="title" style={{ width: 52 }}>{t.buses?.number}</Txt>
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Txt variant="label" numberOfLines={1}>{t.routes?.name} · {t.period}</Txt>
-                  <Txt variant="label" color="ink2" numberOfLines={2}>
-                    {t.started_at ? `${clockTime(new Date(t.started_at))}` : ''}
-                    {t.ended_at ? `–${clockTime(new Date(t.ended_at))} · ${duration(t)}` : ' · running'}
-                    {t.end_reason ? ` · ${END_REASON[t.end_reason] ?? t.end_reason}` : ''}
-                  </Txt>
-                </View>
-                {t.status === 'cancelled' ? <Pill text="Cancelled" tone="late" /> : t.delay_s !== null ? <Pill text={delay.text} tone={delay.tone} /> : null}
-              </Card>
-            );
-          })}
+          <ListGroup>
+            {list.map((t) => {
+              const delay = delayLabel(t.delay_s);
+              const times = `${t.started_at ? clockTime(new Date(t.started_at)) : ''}${
+                t.ended_at ? `–${clockTime(new Date(t.ended_at))} · ${duration(t)}` : ' · running'
+              }${t.end_reason ? ` · ${END_REASON[t.end_reason] ?? t.end_reason}` : ''}`;
+              return (
+                <ListRow
+                  key={t.id}
+                  leading={<Plate number={t.buses?.number ?? '?'} size="sm" off={t.status !== 'active'} />}
+                  title={`${t.routes?.name ?? 'Route'} · ${t.period}`}
+                  detail={times}
+                  trailing={
+                    t.status === 'cancelled' ? <Pill text="Cancelled" tone="late" /> : t.delay_s !== null ? <Pill text={delay.text} tone={delay.tone} /> : undefined
+                  }
+                />
+              );
+            })}
+          </ListGroup>
         </View>
       ))}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3] },
-});

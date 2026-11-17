@@ -53,7 +53,7 @@ export function BusMap({
           )}
           {otherShapes.length > 0 && (
             <GeoJSONSource id="others" data={lines(otherShapes)}>
-              <Layer type="line" id="others-line" paint={{ 'line-color': colors.boardDim, 'line-width': 3, 'line-opacity': 0.5 }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
+              <Layer type="line" id="others-line" paint={{ 'line-color': isDark ? colors.boardDim : colors.ink2, 'line-width': 4, 'line-opacity': 0.7 }} layout={{ 'line-cap': 'round', 'line-join': 'round' }} />
             </GeoJSONSource>
           )}
           {shape && shape.length > 1 && (

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Share, StyleSheet, View } from 'react-native';
+import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { SetupHeader } from '@/components/admin/SetupHeader';
+import { BoardTexture } from '@/components/ui/BoardTexture';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Picker } from '@/components/ui/Picker';
@@ -14,7 +15,7 @@ import { friendlyError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import type { Role } from '@/lib/types';
 import { useTheme } from '@/theme/ThemeProvider';
-import { fonts, radius, space } from '@/theme/tokens';
+import { fonts, radius, space, tap } from '@/theme/tokens';
 
 const ROLE_LABEL: Record<Role, string> = { rider: 'Student / staff', driver: 'Driver', transport_admin: 'Transport admin' };
 
@@ -70,6 +71,7 @@ export default function People() {
           <Card key={role} style={{ gap: space[3] }}>
             <Txt variant="micro" color="ink2">{role === 'rider' ? 'Code for students and staff' : 'Code for drivers only'}</Txt>
             <View style={[styles.code, { backgroundColor: colors.board }]}>
+              <BoardTexture id={`code-dots-${role}`} />
               <Txt style={[styles.codeText, { color: colors.boardInk }]} accessibilityLabel={code.split('').join(' ')}>{code}</Txt>
             </View>
             <View style={styles.actions}>
@@ -91,7 +93,27 @@ export default function People() {
       <Txt variant="micro" color="ink2">Members · {members.length}</Txt>
       {members.map((m) => (
         <Card key={m.user_id} style={{ gap: space[2] }}>
-          <Txt variant="label" style={{ fontSize: 17 }}>{m.display_name}{m.user_id === session?.user.id ? ' (you)' : ''}</Txt>
+          <View style={styles.memberHead}>
+            <View style={[styles.initial, { backgroundColor: m.role === 'driver' ? colors.accent : colors.surface2 }]}>
+              <Txt variant="label" style={{ color: m.role === 'driver' ? colors.onAccent : colors.ink }}>
+                {m.display_name.trim().charAt(0).toUpperCase() || '?'}
+              </Txt>
+            </View>
+            <Txt variant="label" style={{ fontSize: 17, flex: 1 }} numberOfLines={1}>
+              {m.display_name}{m.user_id === session?.user.id ? ' (you)' : ''}
+            </Txt>
+            {m.user_id !== session?.user.id && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${m.display_name} from college`}
+                onPress={() => remove(m)}
+                hitSlop={8}
+                style={({ pressed }) => [styles.removeBtn, pressed && { backgroundColor: colors.lateBg }]}
+              >
+                <Txt variant="label" color="late">Remove</Txt>
+              </Pressable>
+            )}
+          </View>
           <Picker
             label="Role"
             placeholder="Role"
@@ -99,7 +121,6 @@ export default function People() {
             options={(Object.keys(ROLE_LABEL) as Role[]).map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
             onChange={(r) => setRole(m, r as Role)}
           />
-          {m.user_id !== session?.user.id && <Button label="Remove from college" variant="ghost" onPress={() => remove(m)} />}
         </Card>
       ))}
     </Screen>
@@ -107,7 +128,10 @@ export default function People() {
 }
 
 const styles = StyleSheet.create({
-  code: { borderRadius: radius.md, paddingVertical: space[4], alignItems: 'center' },
-  codeText: { fontFamily: fonts.black, fontSize: 40, letterSpacing: 8 },
+  code: { borderRadius: radius.md, paddingVertical: space[4], alignItems: 'center', overflow: 'hidden' },
+  codeText: { fontFamily: fonts.black, fontSize: 40, lineHeight: 48, letterSpacing: 8 },
+  memberHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  initial: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  removeBtn: { minHeight: tap.min, paddingHorizontal: space[3], borderRadius: radius.md, justifyContent: 'center', marginRight: -space[3] },
   actions: { flexDirection: 'row', gap: space[3] },
 });

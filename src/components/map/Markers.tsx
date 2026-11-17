@@ -13,18 +13,27 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { fonts, motion, radius, space } from '@/theme/tokens';
 import type { MapBus, MapStop } from './types';
 
-/** The bus as its own number plate: amber, ink digits, readable at a glance. */
+/**
+ * The bus as its own number plate: amber, ink digits, readable at a glance on both map styles.
+ * A light halo separates it from busy streets; late buses get a red frame, old positions go hollow.
+ */
 export function BusPlate({ bus }: { bus: MapBus }) {
   const { colors } = useTheme();
   return (
     <View
-      accessibilityLabel={`Bus ${bus.label}${bus.stale ? ', last position may be old' : ''}`}
-      style={[
-        styles.plate,
-        { backgroundColor: bus.stale ? colors.boardDim : colors.accent, borderColor: bus.late ? colors.late : colors.board },
-      ]}
+      accessibilityLabel={`Bus ${bus.label}${bus.late ? ', running late' : ''}${bus.stale ? ', last position may be old' : ''}`}
+      style={[styles.halo, { backgroundColor: colors.surface }]}
     >
-      <Txt style={[styles.plateText, { color: colors.onAccent }]}>{bus.label}</Txt>
+      <View
+        style={[
+          styles.plate,
+          bus.stale
+            ? { backgroundColor: colors.surface2, borderColor: colors.boardDim, borderStyle: 'dashed' }
+            : { backgroundColor: colors.accent, borderColor: bus.late ? colors.late : colors.board },
+        ]}
+      >
+        <Txt tabular style={[styles.plateText, { color: bus.stale ? colors.ink2 : colors.onAccent }]}>{bus.label}</Txt>
+      </View>
     </View>
   );
 }
@@ -45,18 +54,20 @@ export function StopDot({ stop }: { stop: MapStop }) {
   }));
 
   const mine = stop.state === 'mine';
-  const size = mine ? 20 : 12;
+  const passed = stop.state === 'passed';
+  const size = mine ? 22 : passed ? 10 : 14;
   return (
-    <View style={styles.stopWrap} accessibilityLabel={`${stop.name}${mine ? ', your stop' : stop.state === 'passed' ? ', passed' : ''}`}>
+    <View style={styles.stopWrap} accessibilityLabel={`${stop.name}${mine ? ', your stop' : passed ? ', passed' : ''}`}>
       {mine && <Animated.View style={[styles.ring, { borderColor: colors.accent }, ringStyle]} />}
       <View
         style={{
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: mine ? colors.accent : stop.state === 'passed' ? colors.surface2 : colors.surface,
-          borderWidth: mine ? 4 : 3,
-          borderColor: stop.state === 'passed' ? colors.line : colors.board,
+          // Passed stops: solid muted dot with a light rim, so they stay visible on light and dark tiles.
+          backgroundColor: mine ? colors.accent : passed ? colors.ink2 : colors.surface,
+          borderWidth: mine ? 4 : passed ? 2 : 3,
+          borderColor: mine ? colors.board : passed ? colors.surface : colors.ink,
         }}
       />
     </View>
@@ -80,18 +91,19 @@ export function MapAttribution() {
 }
 
 const styles = StyleSheet.create({
+  halo: { padding: 2, borderRadius: radius.sm + 2 },
   plate: {
-    minWidth: 36,
-    height: 28,
+    minWidth: 38,
+    height: 30,
     paddingHorizontal: space[2],
     borderRadius: radius.sm,
-    borderWidth: 2,
+    borderWidth: 2.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  plateText: { fontFamily: fonts.black, fontSize: 15, lineHeight: 18 },
+  plateText: { fontFamily: fonts.black, fontSize: 16, lineHeight: 19 },
   stopWrap: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', width: 20, height: 20, borderRadius: 10, borderWidth: 3 },
+  ring: { position: 'absolute', width: 22, height: 22, borderRadius: 11, borderWidth: 3 },
   attribution: {
     position: 'absolute',
     right: space[2],

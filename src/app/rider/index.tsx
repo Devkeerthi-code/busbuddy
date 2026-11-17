@@ -19,7 +19,7 @@ import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
 import { registerForArrivalAlerts } from '@/lib/push';
 import { useTheme } from '@/theme/ThemeProvider';
-import { radius, space } from '@/theme/tokens';
+import { fonts, radius, space } from '@/theme/tokens';
 
 export default function RiderHome() {
   const { membership } = useAuth();
@@ -164,8 +164,8 @@ function Header({ title, subtitle, demo }: { title: string; subtitle: string; de
   return (
     <View style={styles.header}>
       <View style={{ flex: 1 }}>
-        <Txt variant="label" numberOfLines={1}>{title}</Txt>
-        <Txt variant="label" color="ink2" numberOfLines={1}>{subtitle}</Txt>
+        <Txt variant="label" numberOfLines={1} style={styles.headTitle}>{title}</Txt>
+        <Txt variant="label" color="ink2" numberOfLines={1} style={styles.headSub}>{subtitle}</Txt>
       </View>
       {demo && <DemoBadge />}
     </View>
@@ -192,7 +192,7 @@ function ServiceRow({ icon, title, detail, children, onPress }: {
       </View>
       <View style={{ flex: 1 }}>
         <Txt variant="label">{title}</Txt>
-        <Txt variant="label" color="ink2" numberOfLines={1} style={{ fontSize: 13 }}>{detail}</Txt>
+        <Txt variant="label" color="ink2" numberOfLines={1} style={styles.headSub}>{detail}</Txt>
       </View>
       {children ?? <Icon name="chevronRight" size={20} color={colors.ink2} />}
     </Pressable>
@@ -200,7 +200,9 @@ function ServiceRow({ icon, title, detail, children, onPress }: {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44 },
+  headTitle: { fontSize: 16, lineHeight: 22 },
+  headSub: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20 },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   service: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 60 },
   serviceIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },

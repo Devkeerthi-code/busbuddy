@@ -8,6 +8,7 @@ import type { Coord, MapStop } from '@/components/map/types';
 import { StopTimeline } from '@/components/rider/StopTimeline';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pill } from '@/components/ui/Pill';
+import { Plate } from '@/components/ui/Plate';
 import { Screen } from '@/components/ui/Screen';
 import { Txt } from '@/components/ui/Txt';
 import { useRiderPrefs } from '@/hooks/useRiderPrefs';
@@ -17,7 +18,7 @@ import { agoLabel, delayLabel, minutesFromSeconds } from '@/lib/format';
 import { useGlide } from '@/lib/glide';
 import { track } from '@/lib/rider-data';
 import { useTheme } from '@/theme/ThemeProvider';
-import { fonts, space } from '@/theme/tokens';
+import { fonts, radius, space } from '@/theme/tokens';
 
 export default function RiderMap() {
   const { colors } = useTheme();
@@ -96,11 +97,15 @@ export default function RiderMap() {
         fit={fit}
         bottomInset={sheetHeight}
       />
-      <View style={[styles.topBar, { top: insets.top + space[2] }]} pointerEvents="none">
-        <View style={[styles.routeChip, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-          <Txt variant="label" numberOfLines={1}>{primary?.trip.routes?.name ?? ''}</Txt>
+      {primary && (
+        <View style={[styles.topBar, { top: insets.top + space[2] }]} pointerEvents="none">
+          <View style={[styles.routeChip, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            <Plate number={primary.trip.buses?.number ?? '?'} size="sm" off={primary.live.status !== 'active'} />
+            <Txt variant="label" numberOfLines={1} style={{ flexShrink: 1 }}>{primary.trip.routes?.name ?? ''}</Txt>
+            {primary.live.status === 'active' && <View style={[styles.liveDot, { backgroundColor: colors.ontime }]} />}
+          </View>
         </View>
-      </View>
+      )}
       <BottomSheet
         onHeightChange={setSheetHeight}
         header={
@@ -136,7 +141,18 @@ export default function RiderMap() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   topBar: { position: 'absolute', left: space[4], right: space[4], flexDirection: 'row' },
-  routeChip: { paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: 999, borderWidth: 1 },
+  routeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    maxWidth: '100%',
+    paddingLeft: space[1],
+    paddingRight: space[4],
+    paddingVertical: space[1],
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  liveDot: { width: 8, height: 8, borderRadius: 4 },
   sheetHead: { gap: space[1] },
   etaRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space[2] },
 });

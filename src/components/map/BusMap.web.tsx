@@ -55,7 +55,7 @@ export function BusMap({
       m.addSource('route', { type: 'geojson', data: EMPTY });
       m.addSource('driven', { type: 'geojson', data: EMPTY });
       const lineLayout = { 'line-cap': 'round', 'line-join': 'round' } as const;
-      m.addLayer({ id: 'others-line', type: 'line', source: 'others', layout: lineLayout, paint: { 'line-color': colors.boardDim, 'line-width': 3, 'line-opacity': 0.5 } });
+      m.addLayer({ id: 'others-line', type: 'line', source: 'others', layout: lineLayout, paint: { 'line-color': isDark ? colors.boardDim : colors.ink2, 'line-width': 4, 'line-opacity': 0.7 } });
       m.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: lineLayout, paint: { 'line-color': colors.board, 'line-width': 9 } });
       m.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: lineLayout, paint: { 'line-color': colors.accent, 'line-width': 5 } });
       m.addLayer({ id: 'driven-line', type: 'line', source: 'driven', layout: lineLayout, paint: { 'line-color': colors.boardDim, 'line-width': 5 } });

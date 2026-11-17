@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Field } from '@/components/ui/Field';
+import { ListGroup, ListRow } from '@/components/ui/List';
+import { Plate } from '@/components/ui/Plate';
 import { Screen } from '@/components/ui/Screen';
 import { useToast } from '@/components/ui/Toast';
-import { Txt } from '@/components/ui/Txt';
 import { useAuth } from '@/lib/auth';
 import { friendlyError } from '@/lib/errors';
 import { fetchBuses } from '@/lib/rider-data';
@@ -79,18 +80,23 @@ export default function Buses() {
         <Button label="Add bus" icon="plus" pending={pending} onPress={add} />
       </Card>
       {buses?.length === 0 && <EmptyState icon="bus" title="No buses yet" body="Add each bus by the number students see on it." />}
-      {buses?.map((b) => (
-        <Card key={b.id} style={styles.row}>
-          <Txt variant="title" style={{ width: 64 }}>{b.number}</Txt>
-          <Txt color="ink2" style={{ flex: 1 }}>{b.capacity} seats</Txt>
-          <Button label="Remove" variant="ghost" onPress={() => remove(b)} />
-        </Card>
-      ))}
+      {buses && buses.length > 0 && (
+        <ListGroup>
+          {buses.map((b) => (
+            <ListRow
+              key={b.id}
+              leading={<Plate number={b.number} />}
+              title={`Bus ${b.number}`}
+              detail={`${b.capacity} seats`}
+              trailing={<Button label="Remove" variant="ghost" onPress={() => remove(b)} accessibilityHint={`Removes bus ${b.number} and its trips`} />}
+            />
+          ))}
+        </ListGroup>
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   formRow: { flexDirection: 'row', gap: space[3] },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2] },
 });

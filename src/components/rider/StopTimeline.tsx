@@ -4,7 +4,7 @@ import type { TravelStop } from '@/hooks/useRiderView';
 import { minutesFromSeconds } from '@/lib/format';
 import type { StopEta } from '@/lib/types';
 import { useTheme } from '@/theme/ThemeProvider';
-import { fonts, space } from '@/theme/tokens';
+import { fonts, radius, space } from '@/theme/tokens';
 
 type Props = { stops: TravelStop[]; doneSeq: number; myStopId: string | null; etas: StopEta[]; live: boolean };
 
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[3],
     paddingHorizontal: space[3],
-    borderRadius: 10,
+    borderRadius: radius.md,
     marginVertical: 2,
   },
 });

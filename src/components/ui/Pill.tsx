@@ -4,15 +4,17 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { radius, space } from '@/theme/tokens';
 import { Txt } from './Txt';
 
-/** Status pill: the only place semantic green/red appear. */
-export function Pill({ text, tone }: { text: string; tone: DelayTone }) {
+/** Status pill: the only place semantic green/red appear. `onBoard` swaps to the dark destination-board shades. */
+export function Pill({ text, tone, onBoard }: { text: string; tone: DelayTone; onBoard?: boolean }) {
   const { colors } = useTheme();
-  const fg = tone === 'late' ? colors.late : tone === 'ontime' ? colors.ontime : colors.ink2;
-  const bg = tone === 'late' ? colors.lateBg : tone === 'ontime' ? colors.ontimeBg : colors.surface2;
+  const shades = onBoard
+    ? { late: [colors.boardLate, colors.boardLateBg], ontime: [colors.boardOk, colors.boardOkBg], neutral: [colors.boardIdle, colors.boardIdleBg] }
+    : { late: [colors.late, colors.lateBg], ontime: [colors.ontime, colors.ontimeBg], neutral: [colors.ink2, colors.surface2] };
+  const [fg, bg] = shades[tone];
   return (
     <View style={[styles.pill, { backgroundColor: bg }]} accessibilityLabel={text}>
-      <View style={[styles.dot, { backgroundColor: fg }]} />
-      <Txt variant="label" style={{ color: fg }}>
+      <View style={[styles.dot, tone === 'neutral' ? { borderWidth: 2, borderColor: fg } : { backgroundColor: fg }]} />
+      <Txt variant="label" style={{ color: fg }} numberOfLines={1}>
         {text}
       </Txt>
     </View>
@@ -36,7 +38,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[2],
     paddingHorizontal: space[3],
-    paddingVertical: space[1],
+    minHeight: 28,
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },

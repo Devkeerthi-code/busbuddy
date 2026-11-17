@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { HoldButton } from '@/components/driver/HoldButton';
 import { AccountSettings } from '@/components/AccountSettings';
+import { BoardTexture } from '@/components/ui/BoardTexture';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DemoBadge } from '@/components/ui/Pill';
@@ -28,7 +29,7 @@ import { fetchRouteGeometry, fetchStopTimes, fetchTodayTrips } from '@/lib/rider
 import { supabase } from '@/lib/supabase';
 import type { TripRow } from '@/lib/types';
 import { useTheme } from '@/theme/ThemeProvider';
-import { fonts, radius, space } from '@/theme/tokens';
+import { fonts, radius, space, tap } from '@/theme/tokens';
 
 type Plan = { trip: TripRow; firstStop: string; firstTime: string | null; stopCount: number };
 
@@ -159,11 +160,11 @@ export default function DriverHome() {
   const header = (
     <View style={styles.header}>
       <View style={{ flex: 1 }}>
-        <Txt variant="label">Driver · {membership.colleges.name}</Txt>
-        <Txt variant="label" color="ink2">{plan ? `Bus ${plan.trip.buses?.number}` : membership.display_name}</Txt>
+        <Txt variant="label" numberOfLines={1} style={{ fontSize: 16 }}>Driver · {membership.colleges.name}</Txt>
+        <Txt variant="label" color="ink2" numberOfLines={1} style={{ fontFamily: fonts.medium }}>{plan ? `Bus ${plan.trip.buses?.number}` : membership.display_name}</Txt>
       </View>
       {membership.colleges.is_demo && <DemoBadge />}
-      <Pressable onPress={() => setShowSettings((v) => !v)} accessibilityRole="button" hitSlop={12}>
+      <Pressable onPress={() => setShowSettings((v) => !v)} accessibilityRole="button" style={styles.headerLink}>
         <Txt variant="label" color="accentText">{showSettings ? 'Close' : 'Settings'}</Txt>
       </Pressable>
     </View>
@@ -216,11 +217,12 @@ export default function DriverHome() {
       >
         {header}
         <View style={[styles.sharing, { backgroundColor: colors.board }]} accessibilityLiveRegion="polite">
+          <BoardTexture id="driver-board-dots" />
           <View style={styles.liveRow}>
-            <View style={[styles.liveDot, { backgroundColor: failing ? colors.accent : colors.ontime }]} />
-            <Txt style={[styles.sharingTitle, { color: '#F3F0E8' }]}>{failing ? 'Waiting for signal' : 'Sharing location'}</Txt>
+            <View style={[styles.liveDot, { backgroundColor: failing ? colors.accent : colors.boardOk }]} />
+            <Txt style={[styles.sharingTitle, { color: colors.boardText }]}>{failing ? 'Waiting for signal' : 'Sharing location'}</Txt>
           </View>
-          <Txt variant="label" style={{ color: '#A8A396' }}>
+          <Txt variant="label" style={{ color: colors.boardMuted }}>
             {plan.trip.routes?.name} · {failing ? `${snapshot?.queued ?? 0} points saved, sending when back online` : 'students can see the bus'}
           </Txt>
         </View>
@@ -293,6 +295,7 @@ export default function DriverHome() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  headerLink: { minHeight: tap.min, justifyContent: 'center', paddingHorizontal: space[2], marginRight: -space[2] },
   start: {
     minHeight: 320,
     borderRadius: radius.lg,
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
     padding: space[5],
   },
   startText: { fontFamily: fonts.black, fontSize: 56, lineHeight: 60, letterSpacing: -1.5 },
-  sharing: { borderRadius: radius.lg, padding: space[5], gap: space[2] },
+  sharing: { borderRadius: radius.lg, padding: space[5], gap: space[2], overflow: 'hidden' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   liveDot: { width: 20, height: 20, borderRadius: 10 },
   sharingTitle: { fontFamily: fonts.black, fontSize: 36, lineHeight: 40, letterSpacing: -1 },
