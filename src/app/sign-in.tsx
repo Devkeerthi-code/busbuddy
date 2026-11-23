@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { z } from 'zod';
 import { Wordmark } from '@/components/Wordmark';
 import { Button } from '@/components/ui/Button';
@@ -46,7 +46,9 @@ export default function SignIn() {
         const { error } = await supabase.auth.signInWithPassword(parsed.data);
         if (error) throw error;
       } else {
-        const { data, error } = await supabase.auth.signUp(parsed.data);
+        // On the web demo the confirmation link must come back to this site, not the project's default URL.
+        const emailRedirectTo = Platform.OS === 'web' ? new URL('.', window.location.href).href : undefined;
+        const { data, error } = await supabase.auth.signUp({ ...parsed.data, options: { emailRedirectTo } });
         if (error) throw error;
         if (!data.session) setCheckInbox(true);
       }
