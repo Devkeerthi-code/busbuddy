@@ -155,12 +155,29 @@ Background location, MapLibre and push need a development build (Expo Go can’t
    ```
 5. EAS prints an install link and QR code. Open it on the phone, allow “install unknown apps” for the browser, and install. Paste the link at the top of this README.
 
+### Checking the Android app on a phone
+
+Use two phones (or one phone plus the web app for the student side), both signed in to DEMO accounts from `.demo-accounts.local`.
+
+1. **Install**: open the install page above on the phone → Install → allow “install unknown apps” for the browser.
+2. **Student**: sign in as the demo student → pick Morning, Route A, your stop → **Show my bus**. You should see the bus list, then the map tab with stops.
+3. **Driver**: sign in as Demo Driver A on the phone → tap **Start trip** → allow location **“Allow all the time”** and notifications. A “Sharing location” notification must stay in the status bar.
+4. **Live movement**: walk or drive a few hundred metres. Within ~10 s the student’s bus marker moves, the ETA updates and “last updated” stays under 30 s. (At a desk, skip the driver phone and run `npm run simulate -- --route A --period morning`; it drives a demo bus along the real route as a demo driver.)
+5. **Background**: lock the driver phone for 2 minutes. The student view should keep updating; if it freezes, apply the battery steps below.
+6. **End**: use **Hold to end trip**. The student sees the trip finished.
+7. **Push** (after the Firebase step): on the student phone turn on “Alert at 5 minutes”; it should fire once when the bus is about 5 minutes from the stop.
+
+If something fails, `npx supabase functions logs ingest-position` (or Supabase dashboard → Edge Functions → Logs) shows each upload and why it was rejected.
+
 ### Push notifications (Firebase / FCM V1)
 
 Android delivers Expo push notifications through Firebase Cloud Messaging, so each deployment needs its own Firebase project:
 
 1. In the [Firebase console](https://console.firebase.google.com) create a project. You can turn Analytics off.
-2. **Add app → Android.** The package name must equal `android.package` in `app.config.ts` (default `io.github.devkeerthicode.busbuddy`, or your `ANDROID_PACKAGE`). Download **google-services.json** into the project root; `app.config.ts` picks it up automatically.
+2. **Add app → Android.** The package name must equal `android.package` in `app.config.ts` (default `io.github.devkeerthicode.busbuddy`, or your `ANDROID_PACKAGE`). Download **google-services.json** into the project root (it is gitignored) and give it to EAS, which only uploads files git tracks:
+   ```bash
+   eas env:create --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --environment development --environment preview --environment production --visibility secret
+   ```
 3. **Project settings → Service accounts → Generate new private key.** Keep this JSON private (never commit it).
 4. Upload it to Expo: `eas credentials` → **Android** → **production** → **Google Service Account** → **Manage your Google Service Account Key for Push Notifications (FCM V1)** → **Set up a Google Service Account Key for Push Notifications (FCM V1)** → **Upload a new service account key**.
 5. Rebuild the app. Students who turn on “Alert at 5 minutes” register their phone automatically.
