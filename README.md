@@ -135,10 +135,12 @@ Sign in on the web as the demo student from `.demo-accounts.local` and pick **Ro
 ### Tests
 
 ```bash
-npm test          # tracking core, ETA, alerts, invite codes, formatting (offline)
-npm run test:db   # RLS, driver publishing, invite joining, alert de-dup: real DB, every test rolled back
-npm run lint && npm run typecheck
+npm test          # 133 tests: tracking core, ETA, alerts, invite codes, answers, labels, errors (offline)
+npm run test:db   # RLS, driver publishing, invite joining, alert de-dup, leaving a college: real DB, every test rolled back
+npm run check     # lint + types + logic tests, the same as CI
 ```
+
+Some networks block the Postgres ports (5432/6543); the database tests then can't connect and need another network.
 
 ## Android build (EAS)
 
