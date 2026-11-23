@@ -56,5 +56,10 @@ supabase/.branches/
 # copied from node_modules on install
 public/maplibre-gl-worker.mjs
 
+# Firebase: per-deployment config and the private service-account key (see README)
+google-services.json
+*firebase-adminsdk*.json
+service-account*.json
+
 # local Edge Function env (see README)
 supabase/functions/.env

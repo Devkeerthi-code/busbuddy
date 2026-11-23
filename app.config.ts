@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-// google-services.json comes from Firebase (see README → Push notifications). It is not
-// secret in the usual sense, but it is per-project, so each deployer adds their own.
-const googleServicesFile = existsSync('./google-services.json') ? './google-services.json' : undefined;
+// google-services.json comes from Firebase (see README → Push notifications). It is gitignored;
+// EAS cloud builds get it from the GOOGLE_SERVICES_JSON file variable, local builds from the root.
+const googleServicesFile =
+  process.env.GOOGLE_SERVICES_JSON ?? (existsSync('./google-services.json') ? './google-services.json' : undefined);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
