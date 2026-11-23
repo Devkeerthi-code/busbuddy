@@ -10,6 +10,8 @@ const MESSAGES: Record<string, string> = {
   last_admin: 'Your college needs at least one transport admin. Promote someone else first.',
   driver_not_in_college: 'That person is not a driver in your college.',
   not_enough_path: 'This trip recorded too little of the road to use as a route shape.',
+  bad_stops: 'A route can have up to 60 stops. Remove some and save again.',
+  bad_role: 'Codes can only be made for students or drivers.',
   'Invalid login credentials': 'Email or password is wrong.',
   'User already registered': 'An account with this email exists. Sign in instead.',
   'Email not confirmed': 'Confirm your email first. Check your inbox for the link.',
