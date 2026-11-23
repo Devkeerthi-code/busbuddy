@@ -6,6 +6,11 @@ describe('friendlyError', () => {
     expect(friendlyError(new Error('too_many_attempts'))).toMatch(/Wait 10 minutes/);
   });
 
+  it('explains setup errors from the route editor and invite codes', () => {
+    expect(friendlyError(new Error('bad_stops'))).toMatch(/up to 60 stops/);
+    expect(friendlyError(new Error('bad_role'))).toMatch(/students or drivers/);
+  });
+
   it('maps auth messages', () => {
     expect(friendlyError(new Error('Invalid login credentials'))).toBe('Email or password is wrong.');
     expect(friendlyError(new Error('Email not confirmed'))).toMatch(/Confirm your email/);
