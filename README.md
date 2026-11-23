@@ -80,6 +80,8 @@ flowchart LR
 
 The tracking logic lives once, in `supabase/functions/_shared/core/` (plain TypeScript, no dependencies). The Edge Function runs it on Deno, the app imports it for the gliding bus and travel-order helpers, and Jest tests it directly.
 
+The [handbook](docs/handbook/README.md) explains each part in short pages: the tracking algorithms, database functions, every screen, and runbooks for running BusBuddy at a college.
+
 ## Design decisions
 
 1. **One Edge Function in front of every GPS fix, with all writes made as the driver.**
