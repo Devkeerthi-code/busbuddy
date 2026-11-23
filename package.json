@@ -55,6 +55,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm test",
     "test": "jest --selectProjects core",
     "test:db": "node --env-file=.env node_modules/jest/bin/jest.js --selectProjects db --runInBand",
     "db:migrate": "tsx --env-file=.env scripts/db-migrate.ts",
