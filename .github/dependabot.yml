@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # Expo pins compatible versions itself (`npx expo install --fix`), so only GitHub Actions are automated.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
