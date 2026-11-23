@@ -43,7 +43,7 @@ jobs:
           WEB_BASE_URL: /${{ github.event.repository.name }}
       # GitHub Pages has no SPA rewrites: serve the app for every deep link too.
       - run: cp dist/index.html dist/404.html && touch dist/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
