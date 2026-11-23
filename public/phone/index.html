@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BusBuddy · phone view</title>
+<meta name="description" content="BusBuddy shown at phone size: live tracking for college buses.">
+<link rel="icon" href="../favicon.ico">
+<script>
+  // A real phone gets the app itself, never a phone inside a phone.
+  (function () {
+    var w = window.innerWidth;
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (w < 600 || (coarse && w < 900)) location.replace('../');
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;700;800&display=swap">
+<style>
+  :root {
+    --bg: #F3F1EC; --surface: #FFFFFF; --surface2: #E9E6DE; --ink: #121210; --ink2: #4A473F;
+    --line: #D6D1C4; --accent: #FFB400; --on-accent: #121210; --accent-text: #8C5B00;
+    --board: #121210; --board-text: #F3F0E8; --board-muted: #B9B4A6; --board-rule: rgba(243,240,232,0.12);
+    --bezel: #1C1B17; --bezel-edge: #3A3830; --shadow: 0 30px 60px -20px rgba(18,18,16,0.35), 0 8px 20px -8px rgba(18,18,16,0.2);
+    --skel: #E2DED4; --skel-hi: #F0EDE6;
+    --fast: 120ms; --base: 180ms;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E0E0C; --surface: #191915; --surface2: #24231E; --ink: #F3F0E8; --ink2: #A8A396;
+      --line: #34322B; --accent-text: #FFC23D; --board: #050504;
+      --bezel: #050504; --bezel-edge: #34322B; --shadow: 0 30px 60px -20px rgba(0,0,0,0.8), 0 0 0 1px #24231E;
+      --skel: #24231E; --skel-hi: #2E2D27;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 500 16px/24px Barlow, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: var(--on-accent); }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+  main {
+    min-height: 100%; display: flex; align-items: center; justify-content: center;
+    gap: 64px; padding: 24px 32px;
+  }
+
+  /* Phone: drawn at true size, scaled to fit by JS via --s. The holder reserves the scaled box. */
+  .holder { width: calc(414px * var(--s, 1)); height: calc(868px * var(--s, 1)); flex: none; }
+  .phone {
+    width: 414px; height: 868px; padding: 12px; border-radius: 56px;
+    background: var(--bezel); box-shadow: inset 0 0 0 2px var(--bezel-edge), var(--shadow);
+    transform: scale(var(--s, 1)); transform-origin: top left; position: relative;
+  }
+  .screen {
+    width: 390px; height: 844px; border-radius: 44px; overflow: hidden;
+    position: relative; background: var(--bg); isolation: isolate;
+  }
+  /* The app starts below a status-bar strip so the camera island never covers its header. */
+  .screen iframe { position: absolute; top: 48px; left: 0; width: 100%; height: calc(100% - 48px); border: 0; display: block; background: var(--bg); }
+  code { font: 800 16px/1 Barlow, sans-serif; letter-spacing: 2px; background: var(--board); color: var(--accent); padding: 4px 8px; border-radius: 6px; }
+  .island {
+    position: absolute; top: 22px; left: 50%; width: 112px; height: 32px; margin-left: -56px;
+    background: #000; border-radius: 20px; z-index: 3; pointer-events: none;
+  }
+
+  /* Loading skeleton: the map screen in outline, until the iframe loads. */
+  .skeleton {
+    position: absolute; inset: 0; z-index: 2; background: var(--surface2);
+    display: flex; flex-direction: column; transition: opacity var(--base) ease-out;
+  }
+  .skeleton.done { opacity: 0; pointer-events: none; }
+  .sk-map { flex: 1; position: relative; }
+  .sk-chip { position: absolute; top: 64px; left: 16px; width: 190px; height: 48px; border-radius: 12px; background: var(--surface); }
+  .sk-chip::before { content: ""; position: absolute; left: 8px; top: 8px; width: 32px; height: 32px; border-radius: 6px; background: var(--accent); }
+  .sk-sheet { height: 52%; background: var(--surface); border-radius: 20px 20px 0 0; padding: 28px 20px; display: grid; gap: 14px; align-content: start; }
+  .bar { height: 14px; border-radius: 6px; background: linear-gradient(90deg, var(--skel) 0%, var(--skel-hi) 50%, var(--skel) 100%) 0 0 / 200% 100%; animation: shimmer 1.4s linear infinite; }
+  .bar.big { height: 56px; width: 40%; }
+  .bar.w60 { width: 60%; } .bar.w80 { width: 80%; } .bar.w45 { width: 45%; }
+  .sk-msg { margin: 6px 0 0; font-size: 14px; color: var(--ink2); }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .bar { animation: none; }
+    .skeleton { transition: none; }
+  }
+
+  /* Side panel, styled like the app's destination board. */
+  .panel { max-width: 380px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px;
+    background: var(--board); color: var(--board-text); border-radius: 12px;
+    font: 800 12px/16px Barlow, sans-serif; letter-spacing: 1.2px; text-transform: uppercase;
+  }
+  .badge b { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 16px; letter-spacing: 0; }
+  h1 { font: 800 44px/44px Barlow, sans-serif; letter-spacing: -1.8px; margin: 20px 0 12px; }
+  .lede { margin: 0 0 28px; color: var(--ink2); }
+  h2 { font: 800 12px/16px Barlow, sans-serif; letter-spacing: 1.2px; text-transform: uppercase; margin: 0 0 8px; color: var(--accent-text); }
+  ol { list-style: none; margin: 0 0 28px; padding: 0; counter-reset: step; }
+  li { counter-increment: step; display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-weight: 700; }
+  li::before { content: counter(step); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 6px; background: var(--board); color: var(--accent); font: 800 16px/1 Barlow, sans-serif; }
+  li span { font-weight: 500; color: var(--ink2); display: block; }
+  .open {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px;
+    background: var(--accent); color: var(--on-accent); border-radius: 12px;
+    font-weight: 700; text-decoration: none;
+    transition: transform var(--fast) ease-out, box-shadow var(--fast) ease-out;
+  }
+  .open:hover { transform: translateY(-1px); box-shadow: 0 6px 0 -2px var(--ink); }
+  .open:active { transform: translateY(1px); box-shadow: none; }
+  .note { margin: 20px 0 0; font-size: 14px; line-height: 20px; color: var(--ink2); }
+  @media (prefers-reduced-motion: reduce) { .open { transition: none; } .open:hover { transform: none; } }
+
+  @media (max-width: 860px) {
+    main { flex-direction: column; gap: 32px; padding: 32px 20px 48px; }
+    .panel { order: -1; text-align: left; }
+    h1 { font-size: 36px; line-height: 38px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="holder" id="holder">
+    <div class="phone" role="region" aria-label="BusBuddy running at phone size">
+      <div class="screen">
+        <div class="island" aria-hidden="true"></div>
+        <div class="skeleton" id="skeleton" aria-hidden="true">
+          <div class="sk-map"><div class="sk-chip"></div></div>
+          <div class="sk-sheet">
+            <div class="bar big"></div>
+            <div class="bar w60"></div>
+            <div class="bar w80"></div>
+            <div class="bar w45"></div>
+            <div class="bar w80"></div>
+            <p class="sk-msg" id="sk-msg" role="status">Loading BusBuddy…</p>
+          </div>
+        </div>
+        <iframe id="app" src="../" title="BusBuddy app" allow="geolocation"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <section class="panel" aria-labelledby="title">
+    <span class="badge"><b>A</b>Phone view</span>
+    <h1 id="title">BusBuddy</h1>
+    <p class="lede">Live tracking for college buses: students see where their bus is and when it reaches their stop.</p>
+    <h2>Try this in the phone</h2>
+    <ol>
+      <li><div>Sign in<span>or create an account with your email.</span></div></li>
+      <li><div>Join the demo college<span>use the student code <code>43YWH2</code> (a fictional college with simulated buses).</span></div></li>
+      <li><div>Pick route and stop<span>then tap “Show my bus”.</span></div></li>
+    </ol>
+    <a class="open" href="../">Open the full-screen laptop view <span aria-hidden="true">→</span></a>
+    <p class="note">Drivers share their location from the BusBuddy Android app; this view shows what students see.</p>
+  </section>
+</main>
+<script>
+  (function () {
+    var holder = document.getElementById('holder');
+    var skeleton = document.getElementById('skeleton');
+    var frame = document.getElementById('app');
+    var msg = document.getElementById('sk-msg');
+
+    function fit() {
+      var narrow = window.innerWidth <= 860;
+      var room = narrow ? window.innerHeight * 1.2 : window.innerHeight - 48;
+      var s = Math.min(1, room / 868, (window.innerWidth - 40) / 414);
+      holder.style.setProperty('--s', Math.max(0.4, s).toFixed(4));
+    }
+    fit();
+    window.addEventListener('resize', fit);
+
+    var loaded = false;
+    frame.addEventListener('load', function () {
+      loaded = true;
+      skeleton.classList.add('done');
+    });
+    setTimeout(function () {
+      if (!loaded) msg.textContent = 'Still loading. Slow connection? Try the full-screen view.';
+    }, 15000);
+  })();
+</script>
+</body>
+</html>
