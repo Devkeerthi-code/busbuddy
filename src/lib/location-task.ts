@@ -83,7 +83,8 @@ export async function flushQueue(): Promise<TripStatusSnapshot | null> {
         snapshot = { at: Date.now(), ok: false, status: 'completed', queued: 0, error: body.error };
         break;
       }
-      if (!res.ok) throw new Error(body.error ?? `http_${res.status}`);
+      // A batch the server rejects as malformed can never succeed; keeping it would block every later fix.
+      if (!res.ok && res.status !== 400) throw new Error(body.error ?? `http_${res.status}`);
       queue = queue.slice(batch.length);
       await AsyncStorage.setItem(KEYS.queue, JSON.stringify(queue));
       await AsyncStorage.setItem(KEYS.lastSent, JSON.stringify(batch[batch.length - 1]));
