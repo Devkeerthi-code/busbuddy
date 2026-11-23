@@ -98,8 +98,11 @@ export function processFix(state: TrackerState, fix: Fix, ctx: TrackerContext): 
     history: ctx.history,
   });
 
-  const next = upcoming[0];
-  const delaySec = next && etas[0] ? delaySeconds(fix.t, etas[0].seconds, next.scheduledAt) : null;
+  // Pair the first ETA with its own stop: stops already behind the bus have no ETA, so
+  // upcoming[0] can be a different stop with a different timetable.
+  const firstEta = etas[0];
+  const next = firstEta ? upcoming.find((s) => s.seq === firstEta.seq) : undefined;
+  const delaySec = next && firstEta ? delaySeconds(fix.t, firstEta.seconds, next.scheduledAt) : null;
   const storeBreadcrumb =
     state.lastBreadcrumbAt === null || fix.t - state.lastBreadcrumbAt >= TRACKER_DEFAULTS.breadcrumbEveryMs;
 
