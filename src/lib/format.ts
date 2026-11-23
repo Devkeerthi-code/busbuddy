@@ -34,5 +34,7 @@ export function shortTime(pgTime: string | null | undefined): string {
 }
 
 export function distanceLabel(metres: number): string {
-  return metres < 1000 ? `${Math.round(metres / 10) * 10} m` : `${(metres / 1000).toFixed(1)} km`;
+  // Round before choosing the unit so 996 m reads "1.0 km", not "1000 m".
+  const rounded = Math.round(metres / 10) * 10;
+  return rounded < 1000 ? `${rounded} m` : `${(metres / 1000).toFixed(1)} km`;
 }
