@@ -2,7 +2,9 @@
 
 Live tracking for college buses: students see where their bus is and when it reaches their stop; the transport office sees the whole fleet.
 
-**Live demo:** TODO: add the GitHub Pages link after the first deploy (see [Deploy → Web demo](#web-demo-github-pages)).
+**Live demo, laptop:** https://devkeerthi-code.github.io/busbuddy/ (full-screen web app; transport admins get the fleet view)
+**Live demo, phone:** https://devkeerthi-code.github.io/busbuddy/phone/ (the student app inside a phone frame; on a real phone it opens the app directly)
+To try it: create an account, then join the fictional DEMO college with student code `43YWH2`.
 **Android app:** [install page for the standalone APK](https://expo.dev/accounts/devkeerthip/projects/busbuddy/builds/0945c595-a8c8-4f72-96d6-d08c71fd9d08) (EAS preview build; open it on the phone and tap Install). Push alerts need the Firebase step in [Push notifications](#push-notifications-firebase--fcm-v1).
 
 ## Who is this for and what problem does it solve?
@@ -215,7 +217,8 @@ The workflow in `.github/workflows/pages.yml` exports the Expo web build on ever
 
 1. Repo → Settings → Pages → Source: **GitHub Actions**.
 2. Repo → Settings → Secrets and variables → Actions → add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-3. Push. The site appears at `https://<your-user>.github.io/busbuddy/`. Visitors sign up and join the DEMO college with its student code (shown in the app under Setup → People for the demo admin). TODO: put the link at the top.
+3. Push. The app appears at `https://<your-user>.github.io/busbuddy/` and the phone-frame view (`public/phone/index.html`) at `.../busbuddy/phone/`. Visitors sign up and join the DEMO college with its student code (shown in the app under Setup → People for the demo admin; re-seeding changes it, so update the README and `public/phone/index.html`).
+4. Supabase → Authentication → URL Configuration: add `https://<your-user>.github.io/busbuddy/**` to Redirect URLs so email-confirmation links return to the demo. For a frictionless demo, turn off **Confirm email** under Sign In / Providers → Email instead.
 
 ## Limitations and what breaks at scale
 
