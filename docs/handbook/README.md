@@ -30,5 +30,5 @@ Short pages that explain how BusBuddy works and how to run it. Start with [Overv
 - [Code reference](code/README.md): one page per module, script and main component
 
 ## Project
-- [Testing](testing.md) · [Design system](design-system.md) · [Accessibility](accessibility.md) · [Privacy](privacy.md)
+- [Environment variables](environment.md) · [Testing](testing.md) · [Design system](design-system.md) · [Accessibility](accessibility.md) · [Privacy](privacy.md)
 - [Scaling](scaling.md) · [Running cost](cost.md) · [FAQ](faq.md)
