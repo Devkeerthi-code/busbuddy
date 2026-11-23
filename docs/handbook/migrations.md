@@ -11,6 +11,7 @@ Plain SQL files in `supabase/migrations/`, applied in name order by `npm run db:
 | `…0500_join_rate_limit.sql` | A wrong invite code returns no row instead of raising, so the attempt that counts towards the rate limit is not rolled back |
 | `…0600_claim_alerts_seq.sql` | Alert claiming returns the stop it was for |
 | `…0700_trip_direction.sql` | Evening trips in travel order; events and alerts keyed by stop id |
+| `…0800_leave_college_cleanup.sql` | Leaving a college also deletes the saved stop, so alerts stop |
 
 ## Rules
 
